@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Ruler spike</title>
+    <link rel="stylesheet" href="css/index.css">
+    <script src="js/jquery-2.1.4.js"></script>
+    <script src="js/main.js"></script>
+  </head>
+  <body>
+    <div class="center-pane">
+      <div id="workarea" class="workarea">
+        <div class="canvas">
+          <div id="ruler-x" class="ruler-x">
+            <canvas height="15"></canvas>
+          </div>
+          <div id="ruler-y" class="ruler-y">
+            <canvas width="15"></canvas>
+          </div>
+          <div class="ruler-corner"></div>
+          <svg x="710" y="470" width="500" height="500" style="left: 725px; top: 485px;">
+            <polyline points="100 100 300 100 400 300" stroke="#000000" fill="none"></polyline>
+          </svg>
+        </div>
+      </div>
+      <select id="zoom">
+        <option value="0.5">50%</option>
+        <option value="1" selected>100%</option>
+        <option value="2">200%</option>
+      </select>
+    </div>
+  </body>
+</html>
