@@ -2,13 +2,19 @@
 
   var Ruler = {
     root: null,
+    canvas: null,
+    context: null,
     unit: 'px',
+    zoomValue: 1,
 
     ruler: function (root, option) {
-      rulerX.root = rulerY.root = root;
-      rulerX.canvas = rulerY.canvas = root.children('.canvas');
+      this.root = rulerX.root = rulerY.root = root;
+      this.canvas = rulerX.canvas = rulerY.canvas = root.children('.canvas');
       if (option.unit) {
         rulerX.unit = rulerY.unit = option.unit;
+      }
+      if (option.zoom) {
+        this.zoomValue = rulerX.zoomValue = rulerY.zoomValue = option.zoom;
       }
 
       root.on('scroll', function (event) {
@@ -20,9 +26,6 @@
         });
       });
     },
-
-    canvas: null,
-    context: null,
 
     initialize: function () {
       var $rulerCanvasOriginal = $('#ruler-' + this.dimensionType + ' canvas:first');
@@ -72,6 +75,27 @@
     contextStroke: function () {
       this.context.strokeStyle = '#000';
       this.context.stroke();
+    },
+
+    zoom: function (zoom) {
+      var cz = zoom / this.zoomValue;
+
+      this.zoomValue = rulerX.zoomValue = rulerY.zoomValue = zoom;
+      this.canvas.css('zoom', zoom);
+      this.root.find('.ruler-x').css('zoom', 1 / zoom);
+      this.root.find('.ruler-y').css('zoom', 1 / zoom);
+      this.root.find('.ruler-corner').css('zoom', 1 / zoom);
+
+      this.root.scrollTop(this.root.scrollTop() *  cz);
+      this.root.scrollLeft(this.root.scrollLeft() * cz);
+
+      var svg = this.root.find('svg');
+      svg.css({
+        left: parseFloat(svg.css('left')) / cz + 'px',
+        top: parseFloat(svg.css('top')) / cz + 'px'
+      });
+
+      this.update(zoom);
     },
 
     update: function (zoom) {
@@ -186,36 +210,13 @@
   $.extend(true, rulerY, Ruler);
 
   window.addEventListener('load', function () {
-    var workarea = document.getElementById('workarea');
-    var canvas = workarea.querySelector('.canvas');
-    var _rulerX = workarea.querySelector('.ruler-x');
-    var _rulerY = workarea.querySelector('.ruler-y');
-    var rulerCorner = workarea.querySelector('.ruler-corner');
-
-    var zoom = document.getElementById('zoom').value = 1;
-
     document.getElementById('zoom').addEventListener('change', function () {
-      var cz = parseFloat(this.value) / zoom;
-
-      zoom = parseFloat(this.value);
-      canvas.style.zoom = zoom;
-      _rulerX.style.zoom = 1 / zoom;
-      _rulerY.style.zoom = 1 / zoom;
-      rulerCorner.style.zoom =  1 / zoom;
-
-      workarea.scrollTop = workarea.scrollTop * cz;
-      workarea.scrollLeft = workarea.scrollLeft * cz;
-
-      $('#workarea svg').css({
-        left: parseFloat($('#workarea svg').css('left')) / cz + 'px',
-        top: parseFloat($('#workarea svg').css('top')) / cz + 'px'
-      });
-
-      Ruler.update(zoom);
+      Ruler.zoom(parseFloat(this.value));
     });
 
     Ruler.ruler($('#workarea'), {
-      unit: 'px'
+      unit: 'px',
+      zoom: 1
     });
     Ruler.update(1);
   });
