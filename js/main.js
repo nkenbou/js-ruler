@@ -24,11 +24,9 @@
     return document.querySelector('#workarea svg');
   }
 
-  var rulerX = {
+  var ruler = {
     scanvas: null,
     context: null,
-    dimensionType: 'x',
-    lengthType: 'width',
 
     initialize: function () {
       var $rulerCanvasOriginal = $('#ruler-' + this.dimensionType + ' canvas:first');
@@ -58,6 +56,16 @@
     getRulerLength: function () {
       return this.scanvas[this.lengthType]();
     },
+
+    contextStroke: function () {
+      this.context.strokeStyle = '#000';
+      this.context.stroke();
+    }
+  };
+
+  var rulerX = {
+    dimensionType: 'x',
+    lengthType: 'width',
 
     contextDrawDelimiter: function (x) {
       this.context.moveTo(x, 15);
@@ -71,48 +79,12 @@
     contextDrawSubDelimiter: function (x, lineNumber) {
       this.context.moveTo(x, 15);
       this.context.lineTo(x, lineNumber);
-    },
-
-    contextStroke: function () {
-      this.context.strokeStyle = '#000';
-      this.context.stroke();
     }
   };
 
   var rulerY = {
-    scanvas: null,
-    context: null,
     dimensionType: 'y',
     lengthType: 'height',
-
-    initialize: function () {
-      var $rulerCanvasOriginal = $('#ruler-' + this.dimensionType + ' canvas:first');
-
-      // Bit of a hack to fully clear the canvas in Safari & IE9
-      var $rulerCanvas = $rulerCanvasOriginal.clone();
-      $rulerCanvasOriginal.replaceWith($rulerCanvas);
-
-      var rulerCanvas = $rulerCanvas[0];
-
-      // Set the canvas size to the width of the container
-      var rulerLength = this.getRulerLength();
-      // rulerCanvas.parentNode.style[this.lengthType] = rulerLength + 'px'; // nkenbou
-      this.context = rulerCanvas.getContext('2d');
-
-      this.context.fillStyle = 'rgb(200,0,0)';
-      this.context.fillRect(0, 0, rulerCanvas.width, rulerCanvas.height);
-      this.context.font = '9px sans-serif';
-
-      rulerCanvas[this.lengthType] = rulerLength;
-    },
-
-    getSvgDimension:  function () {
-      return Number(getSVG().getAttribute(this.dimensionType));
-    },
-
-    getRulerLength: function () {
-      return this.scanvas[this.lengthType]();
-    },
 
     contextDrawDelimiter: function (y) {
       this.context.moveTo(15, y);
@@ -130,13 +102,11 @@
     contextDrawSubDelimiter: function (y, lineNumber) {
       this.context.moveTo(15, y);
       this.context.lineTo(lineNumber, y);
-    },
-
-    contextStroke: function () {
-      this.context.strokeStyle = '#000';
-      this.context.stroke();
     }
   };
+
+  $.extend(true, rulerX, ruler);
+  $.extend(true, rulerY, ruler);
 
   function updateRuler(ruler, zoom) {
     var i;
