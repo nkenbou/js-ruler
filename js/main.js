@@ -2,12 +2,12 @@
 
   var BASE_UNIT = 'px';
 
-  var r_intervals = [];
+  var bigIntervals = [];
   var i;
   for (i = 0.1; i < 1E5; i *= 10) {
-	r_intervals.push(i);
-	r_intervals.push(2 * i);
-	r_intervals.push(5 * i);
+	bigIntervals.push(i);
+	bigIntervals.push(2 * i);
+	bigIntervals.push(5 * i);
   }
 
   function getZoom() {
@@ -20,88 +20,79 @@
     };
   }
 
-  function  getContentElem() {
+  function  getSVG() {
     return document.querySelector('#workarea svg');
   }
 
   function updateRulers(scanvas, zoom) {
-    if (!zoom) {zoom = getZoom();}
-    if (!scanvas) {scanvas = $('#workarea > .canvas');}
-
     var d, i;
-    var contentElem = getContentElem();
+    var svg = getSVG();
     var units = getTypeMap();
     var unit = units[BASE_UNIT]; // 1 = 1px
 
     // draw x ruler then y ruler
     for (d = 0; d < 2; d++) {
       var isX = (d === 0);
-      var dim = isX ? 'x' : 'y';
-      var lentype = isX ? 'width' : 'height';
-      var contentDim = Number(contentElem.getAttribute(dim));
+      var dimensionType = isX ? 'x' : 'y';
+      var lengthType = isX ? 'width' : 'height';
+      var svgDimension = Number(svg.getAttribute(dimensionType));
 
-      var $hcanv_orig = $('#ruler-' + dim + ' canvas:first');
+      var $rulerCanvasOriginal = $('#ruler-' + dimensionType + ' canvas:first');
 
       // Bit of a hack to fully clear the canvas in Safari & IE9
-      var $hcanv = $hcanv_orig.clone();
-      $hcanv_orig.replaceWith($hcanv);
+      var $rulerCanvas = $rulerCanvasOriginal.clone();
+      $rulerCanvasOriginal.replaceWith($rulerCanvas);
 
-      var hcanv = $hcanv[0];
+      var rulerCanvas = $rulerCanvas[0];
 
       // Set the canvas size to the width of the container
-      var ruler_len = scanvas[lentype]();
-      // hcanv.parentNode.style[lentype] = ruler_len + 'px'; // nkenbou
-      var ctx_num = 0;
-      var ctx = hcanv.getContext('2d');
-      var num;
+      var rulerLength = scanvas[lengthType]();
+      // rulerCanvas.parentNode.style[lengthType] = rulerLength + 'px'; // nkenbou
+      var context = rulerCanvas.getContext('2d');
 
-      ctx.fillStyle = 'rgb(200,0,0)';
-      ctx.fillRect(0, 0, hcanv.width, hcanv.height);
+      context.fillStyle = 'rgb(200,0,0)';
+      context.fillRect(0, 0, rulerCanvas.width, rulerCanvas.height);
 
-      hcanv[lentype] = ruler_len;
+      rulerCanvas[lengthType] = rulerLength;
 
-      var u_multi = unit * zoom;
+      var zoomedUnitPX = unit * zoom;
 
       // Calculate the main number interval
-      var raw_m = 50 / u_multi;
-      var multi = 1;
-      for (i = 0; i < r_intervals.length; i++) {
-        num = r_intervals[i];
-        multi = num;
-        if (raw_m <= num) {
+      var raw = 50 / zoomedUnitPX;
+      var bigInterval = 1;
+      for (i = 0; i < bigIntervals.length; i++) {
+        bigInterval = bigIntervals[i];
+        if (raw <= bigInterval) {
           break;
         }
       }
 
-      var big_int = multi * u_multi;
+      var bigIntervalPX = bigInterval * zoomedUnitPX;
 
-      ctx.font = '9px sans-serif';
+      context.font = '9px sans-serif';
 
-      var ruler_d = ((contentDim / u_multi) % multi) * u_multi;
-      var label_pos = ruler_d - big_int;
+      var rulerDelimiter = ((svgDimension / zoomedUnitPX) % bigInterval) * zoomedUnitPX;
+      var labelPosition = rulerDelimiter - bigIntervalPX;
       // draw big intervals
-      while (ruler_d < ruler_len) {
-        label_pos += big_int;
-        // var real_d = ruler_d - contentDim; // Currently unused
+      while (rulerDelimiter < rulerLength) {
+        labelPosition += bigIntervalPX;
 
-        var cur_d = Math.round(ruler_d) + 0.5;
+        var currentDelimiter = Math.round(rulerDelimiter) + 0.5;
         if (isX) {
-          ctx.moveTo(cur_d, 15);
-          ctx.lineTo(cur_d, 0);
+          context.moveTo(currentDelimiter, 15);
+          context.lineTo(currentDelimiter, 0);
         }
         else {
-          ctx.moveTo(15, cur_d);
-          ctx.lineTo(0, cur_d);
+          context.moveTo(15, currentDelimiter);
+          context.lineTo(0, currentDelimiter);
         }
 
-        num = (label_pos - contentDim) / u_multi;
-        var label;
-        if (multi >= 1) {
-          label = Math.round(num);
-        }
-        else {
-          var decs = String(multi).split('.')[1].length;
-          label = num.toFixed(decs);
+        var label = (labelPosition - svgDimension) / zoomedUnitPX;
+        if (bigInterval >= 1) {
+          label = Math.round(label);
+        } else {
+          var decs = String(bigInterval).split('.')[1].length;
+          label = label.toFixed(decs);
         }
 
         // Change 1000s to Ks
@@ -110,34 +101,34 @@
         }
 
         if (isX) {
-          ctx.fillText(label, ruler_d+2, 8);
+          context.fillText(label, rulerDelimiter+2, 8);
         } else {
           // draw label vertically
           var str = String(label).split('');
           for (i = 0; i < str.length; i++) {
-            ctx.fillText(str[i], 1, (ruler_d+9) + i*9);
+            context.fillText(str[i], 1, (rulerDelimiter+9) + i*9);
           }
         }
 
-        var part = big_int / 10;
+        var part = bigIntervalPX / 10;
         // draw the small intervals
         for (i = 1; i < 10; i++) {
-          var sub_d = Math.round(ruler_d + part * i) + 0.5;
+          var subDelimiter = Math.round(rulerDelimiter + part * i) + 0.5;
 
           // odd lines are slighly longer
-          var line_num = (i % 2) ? 12 : 10;
+          var lineNumber = (i % 2) ? 12 : 10;
           if (isX) {
-            ctx.moveTo(sub_d, 15);
-            ctx.lineTo(sub_d, line_num);
+            context.moveTo(subDelimiter, 15);
+            context.lineTo(subDelimiter, lineNumber);
           } else {
-            ctx.moveTo(15, sub_d);
-            ctx.lineTo(line_num, sub_d);
+            context.moveTo(15, subDelimiter);
+            context.lineTo(lineNumber, subDelimiter);
           }
         }
-        ruler_d += big_int;
+        rulerDelimiter += bigIntervalPX;
       }
-      ctx.strokeStyle = '#000';
-      ctx.stroke();
+      context.strokeStyle = '#000';
+      context.stroke();
     }
   }
 
@@ -177,6 +168,6 @@
       rulerCorner.style.top = workarea.scrollTop / zoom + 'px';
     });
 
-    updateRulers($('#workarea > .canvas'), 1);
+    updateRulers($('#workarea > .canvas'), getZoom());
   });
 }());
