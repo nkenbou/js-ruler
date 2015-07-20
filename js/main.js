@@ -1,37 +1,19 @@
 (function () {
 
-  var BASE_UNIT = 'px';
+  var Ruler = {
+    root: null,
+    unit: 'px',
 
-  var bigIntervals = [];
-  var i;
-  for (i = 0.1; i < 1E5; i *= 10) {
-	bigIntervals.push(i);
-	bigIntervals.push(2 * i);
-	bigIntervals.push(5 * i);
-  }
+    ruler: function (root, option) {
+      rulerX.root = rulerY.root = root;
+      rulerX.canvas = rulerY.canvas = root.children('.canvas');
+      if (option.unit) {
+        rulerX.unit = rulerY.unit = option.unit;
+      }
+    },
 
-  function getZoom() {
-    return 1;
-  }
-
-  function getTypeMap() {
-    return {
-      'px': 1
-    };
-  }
-
-  function  getSVG() {
-    return document.querySelector('#workarea svg');
-  }
-
-  var ruler = {
     canvas: null,
     context: null,
-
-    setCanvas: function (canvas) {
-      rulerX.canvas = canvas;
-      rulerY.canvas = canvas;
-    },
 
     initialize: function () {
       var $rulerCanvasOriginal = $('#ruler-' + this.dimensionType + ' canvas:first');
@@ -54,8 +36,24 @@
       rulerCanvas[this.lengthType] = rulerLength;
     },
 
+    getUnits: function () {
+      return {
+        'px': 1
+      };
+    },
+
+    getBigIntervals: function () {
+      var bigIntervals = [];
+      for (var i = 0.1; i < 1E5; i *= 10) {
+	    bigIntervals.push(i);
+	    bigIntervals.push(2 * i);
+	    bigIntervals.push(5 * i);
+      }
+      return bigIntervals;
+    },
+
     getSvgDimension:  function () {
-      return Number(getSVG().getAttribute(this.dimensionType));
+      return Number(this.root.find('svg')[0].getAttribute(this.dimensionType));
     },
 
     getRulerLength: function () {
@@ -74,13 +72,14 @@
 
     _update: function (zoom) {
       var i;
-      var units = getTypeMap();
-      var unit = units[BASE_UNIT]; // 1 = 1px
+      var units = this.getUnits();
+      var unit = units[this.unit]; // 1 = 1px
       var zoomedUnitPX = unit * zoom;
 
       // Calculate the main number interval
       var raw = 50 / zoomedUnitPX;
       var bigInterval = 1;
+      var bigIntervals = this.getBigIntervals();
       for (i = 0; i < bigIntervals.length; i++) {
         bigInterval = bigIntervals[i];
         if (raw <= bigInterval) {
@@ -174,8 +173,8 @@
     }
   };
 
-  $.extend(true, rulerX, ruler);
-  $.extend(true, rulerY, ruler);
+  $.extend(true, rulerX, Ruler);
+  $.extend(true, rulerY, Ruler);
 
   window.addEventListener('load', function () {
     var workarea = document.getElementById('workarea');
@@ -203,7 +202,7 @@
         top: parseFloat($('#workarea svg').css('top')) / cz + 'px'
       });
 
-      ruler.update(zoom);
+      Ruler.update(zoom);
     });
 
     workarea.addEventListener('scroll', function (event) {
@@ -213,7 +212,9 @@
       rulerCorner.style.top = workarea.scrollTop / zoom + 'px';
     });
 
-    ruler.setCanvas($('#workarea > .canvas'));
-    ruler.update(getZoom());
+    Ruler.ruler($('#workarea'), {
+      unit: 'px'
+    });
+    Ruler.update(1);
   });
 }());
