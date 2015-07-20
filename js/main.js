@@ -65,7 +65,7 @@
     },
 
     getSvgDimension:  function () {
-      return Number(this.root.find('svg')[0].getAttribute(this.dimensionType));
+      return Number(this.root.find('.content-wrapper').position()[this.positionType]);
     },
 
     getRulerLength: function () {
@@ -80,25 +80,36 @@
     zoom: function (zoom) {
       var cz = zoom / this.zoomValue;
 
-      this.zoomValue = rulerX.zoomValue = rulerY.zoomValue = zoom;
-      this.canvas.css('zoom', zoom);
-      this.root.find('.ruler-x').css('zoom', 1 / zoom);
-      this.root.find('.ruler-y').css('zoom', 1 / zoom);
-      this.root.find('.ruler-corner').css('zoom', 1 / zoom);
-
-      this.root.scrollTop(this.root.scrollTop() *  cz);
-      this.root.scrollLeft(this.root.scrollLeft() * cz);
-
-      var svg = this.root.find('svg');
-      svg.css({
-        left: parseFloat(svg.css('left')) / cz + 'px',
-        top: parseFloat(svg.css('top')) / cz + 'px'
-      });
-
       this.update(zoom);
+
+      this.root.scrollTop(this.root.scrollTop() * cz);
+      this.root.scrollLeft(this.root.scrollLeft() * cz);
     },
 
     update: function (zoom) {
+      this.zoomValue = rulerX.zoomValue = rulerY.zoomValue = zoom;
+      this.root.find('svg').css('zoom', zoom);
+
+      var svgWidth = this.root.find('svg').width() * zoom;
+      var width = svgWidth * 3;
+      if (width < 1864) {
+        width = 1864;
+      }
+      var svgHeight = this.root.find('svg').height() * zoom;
+      var height = svgHeight * 3;
+      if (height < 1500) {
+        height: 1500;
+      }
+
+      this.canvas.css({
+        width: width + 'px',
+        height: height + 'px',
+      });
+      this.root.find('.content-wrapper').css({
+        left: width / 2 - svgWidth / 2 + 'px',
+        top: height / 2 - svgHeight / 2 + 'px'
+      });
+
       this._update.call(rulerX, zoom);
       this._update.call(rulerY, zoom);
     },
@@ -165,6 +176,7 @@
   };
 
   var rulerX = {
+    positionType: 'left',
     dimensionType: 'x',
     lengthType: 'width',
 
@@ -184,6 +196,7 @@
   };
 
   var rulerY = {
+    positionType: 'top',
     dimensionType: 'y',
     lengthType: 'height',
 
