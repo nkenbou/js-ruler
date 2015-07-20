@@ -10,6 +10,15 @@
       if (option.unit) {
         rulerX.unit = rulerY.unit = option.unit;
       }
+
+      root.on('scroll', function (event) {
+        root.find('.ruler-x').css('top', root.scrollTop() + 'px');
+        root.find('.ruler-y').css('left', root.scrollLeft() + 'px');
+        root.find('.ruler-corner').css({
+          left: root.scrollLeft() + 'px',
+          top: root.scrollTop() + 'px'
+        });
+      });
     },
 
     canvas: null,
@@ -203,13 +212,6 @@
       });
 
       Ruler.update(zoom);
-    });
-
-    workarea.addEventListener('scroll', function (event) {
-      _rulerX.style.top = workarea.scrollTop / zoom + 'px';
-      _rulerY.style.left = workarea.scrollLeft / zoom + 'px';
-      rulerCorner.style.left = workarea.scrollLeft / zoom + 'px';
-      rulerCorner.style.top = workarea.scrollTop / zoom + 'px';
     });
 
     Ruler.ruler($('#workarea'), {
