@@ -25,8 +25,13 @@
   }
 
   var ruler = {
-    scanvas: null,
+    canvas: null,
     context: null,
+
+    setCanvas: function (canvas) {
+      rulerX.canvas = canvas;
+      rulerY.canvas = canvas;
+    },
 
     initialize: function () {
       var $rulerCanvasOriginal = $('#ruler-' + this.dimensionType + ' canvas:first');
@@ -54,12 +59,76 @@
     },
 
     getRulerLength: function () {
-      return this.scanvas[this.lengthType]();
+      return this.canvas[this.lengthType]();
     },
 
     contextStroke: function () {
       this.context.strokeStyle = '#000';
       this.context.stroke();
+    },
+
+    update: function (zoom) {
+      this._update.call(rulerX, zoom);
+      this._update.call(rulerY, zoom);
+    },
+
+    _update: function (zoom) {
+      var i;
+      var units = getTypeMap();
+      var unit = units[BASE_UNIT]; // 1 = 1px
+      var zoomedUnitPX = unit * zoom;
+
+      // Calculate the main number interval
+      var raw = 50 / zoomedUnitPX;
+      var bigInterval = 1;
+      for (i = 0; i < bigIntervals.length; i++) {
+        bigInterval = bigIntervals[i];
+        if (raw <= bigInterval) {
+          break;
+        }
+      }
+
+      var bigIntervalPX = bigInterval * zoomedUnitPX;
+
+      this.initialize();
+
+      var rulerDelimiter = ((this.getSvgDimension() / zoomedUnitPX) % bigInterval) * zoomedUnitPX;
+      var labelPosition = rulerDelimiter - bigIntervalPX;
+      // draw big intervals
+      while (rulerDelimiter < this.getRulerLength()) {
+        labelPosition += bigIntervalPX;
+
+        var currentDelimiter = Math.round(rulerDelimiter) + 0.5;
+        this.contextDrawDelimiter(currentDelimiter);
+
+        var label = (labelPosition - this.getSvgDimension()) / zoomedUnitPX;
+        if (bigInterval >= 1) {
+          label = Math.round(label);
+        } else {
+          var decs = String(bigInterval).split('.')[1].length;
+          label = label.toFixed(decs);
+        }
+
+        // Change 1000s to Ks
+        if (label !== 0 && label !== 1000 && label % 1000 === 0) {
+          label = (label / 1000) + 'K';
+        }
+
+        this.contextDrawLabel(label, rulerDelimiter);
+
+        var part = bigIntervalPX / 10;
+        // draw the small intervals
+        for (i = 1; i < 10; i++) {
+          var subDelimiter = Math.round(rulerDelimiter + part * i) + 0.5;
+
+          // odd lines are slighly longer
+          var lineNumber = (i % 2) ? 12 : 10;
+          this.contextDrawSubDelimiter(subDelimiter, lineNumber);
+        }
+        rulerDelimiter += bigIntervalPX;
+      }
+
+      this.contextStroke();
     }
   };
 
@@ -108,65 +177,6 @@
   $.extend(true, rulerX, ruler);
   $.extend(true, rulerY, ruler);
 
-  function updateRuler(ruler, zoom) {
-    var i;
-    var units = getTypeMap();
-    var unit = units[BASE_UNIT]; // 1 = 1px
-    var zoomedUnitPX = unit * zoom;
-
-    // Calculate the main number interval
-    var raw = 50 / zoomedUnitPX;
-    var bigInterval = 1;
-    for (i = 0; i < bigIntervals.length; i++) {
-      bigInterval = bigIntervals[i];
-      if (raw <= bigInterval) {
-        break;
-      }
-    }
-
-    var bigIntervalPX = bigInterval * zoomedUnitPX;
-
-    ruler.initialize();
-
-    var rulerDelimiter = ((ruler.getSvgDimension() / zoomedUnitPX) % bigInterval) * zoomedUnitPX;
-    var labelPosition = rulerDelimiter - bigIntervalPX;
-    // draw big intervals
-    while (rulerDelimiter < ruler.getRulerLength()) {
-      labelPosition += bigIntervalPX;
-
-      var currentDelimiter = Math.round(rulerDelimiter) + 0.5;
-      ruler.contextDrawDelimiter(currentDelimiter);
-
-      var label = (labelPosition - ruler.getSvgDimension()) / zoomedUnitPX;
-      if (bigInterval >= 1) {
-        label = Math.round(label);
-      } else {
-        var decs = String(bigInterval).split('.')[1].length;
-        label = label.toFixed(decs);
-      }
-
-      // Change 1000s to Ks
-      if (label !== 0 && label !== 1000 && label % 1000 === 0) {
-        label = (label / 1000) + 'K';
-      }
-
-      ruler.contextDrawLabel(label, rulerDelimiter);
-
-      var part = bigIntervalPX / 10;
-      // draw the small intervals
-      for (i = 1; i < 10; i++) {
-        var subDelimiter = Math.round(rulerDelimiter + part * i) + 0.5;
-
-        // odd lines are slighly longer
-        var lineNumber = (i % 2) ? 12 : 10;
-        ruler.contextDrawSubDelimiter(subDelimiter, lineNumber);
-      }
-      rulerDelimiter += bigIntervalPX;
-    }
-
-    ruler.contextStroke();
-  }
-
   window.addEventListener('load', function () {
     var workarea = document.getElementById('workarea');
     var canvas = workarea.querySelector('.canvas');
@@ -193,8 +203,7 @@
         top: parseFloat($('#workarea svg').css('top')) / cz + 'px'
       });
 
-      updateRuler(rulerX, zoom);
-      updateRuler(rulerY, zoom);
+      ruler.update(zoom);
     });
 
     workarea.addEventListener('scroll', function (event) {
@@ -204,8 +213,7 @@
       rulerCorner.style.top = workarea.scrollTop / zoom + 'px';
     });
 
-    rulerX.scanvas = rulerY.scanvas = $('#workarea > .canvas');
-    updateRuler(rulerX, getZoom());
-    updateRuler(rulerY, getZoom());
+    ruler.setCanvas($('#workarea > .canvas'));
+    ruler.update(getZoom());
   });
 }());
