@@ -29,7 +29,6 @@
     if (!scanvas) {scanvas = $('#workarea > .canvas');}
 
     var d, i;
-    var limit = 30000;
     var contentElem = getContentElem();
     var units = getTypeMap();
     var unit = units[BASE_UNIT]; // 1 = 1px
@@ -51,36 +50,13 @@
 
       // Set the canvas size to the width of the container
       var ruler_len = scanvas[lentype]();
-      var total_len = ruler_len;
-      // hcanv.parentNode.style[lentype] = total_len + 'px'; // nkenbou
+      // hcanv.parentNode.style[lentype] = ruler_len + 'px'; // nkenbou
       var ctx_num = 0;
       var ctx = hcanv.getContext('2d');
-      var ctx_arr, num, ctx_arr_num;
+      var num;
 
       ctx.fillStyle = 'rgb(200,0,0)';
       ctx.fillRect(0, 0, hcanv.width, hcanv.height);
-
-      // Remove any existing canvasses
-      $hcanv.siblings().remove();
-
-      // Create multiple canvases when necessary (due to browser limits)
-      if (ruler_len >= limit) {
-        ctx_arr_num = parseInt(ruler_len / limit, 10) + 1;
-        ctx_arr = [];
-        ctx_arr[0] = ctx;
-        var copy;
-        for (i = 1; i < ctx_arr_num; i++) {
-          hcanv[lentype] = limit;
-          copy = hcanv.cloneNode(true);
-          hcanv.parentNode.appendChild(copy);
-          ctx_arr[i] = copy.getContext('2d');
-        }
-
-        copy[lentype] = ruler_len % limit;
-
-        // set copy width to last
-        ruler_len = limit;
-      }
 
       hcanv[lentype] = ruler_len;
 
@@ -104,7 +80,7 @@
       var ruler_d = ((contentDim / u_multi) % multi) * u_multi;
       var label_pos = ruler_d - big_int;
       // draw big intervals
-      while (ruler_d < total_len) {
+      while (ruler_d < ruler_len) {
         label_pos += big_int;
         // var real_d = ruler_d - contentDim; // Currently unused
 
@@ -147,18 +123,6 @@
         // draw the small intervals
         for (i = 1; i < 10; i++) {
           var sub_d = Math.round(ruler_d + part * i) + 0.5;
-          if (ctx_arr && sub_d > ruler_len) {
-            ctx_num++;
-            ctx.stroke();
-            if (ctx_num >= ctx_arr_num) {
-              i = 10;
-              ruler_d = total_len;
-              continue;
-            }
-            ctx = ctx_arr[ctx_num];
-            ruler_d -= limit;
-            sub_d = Math.round(ruler_d + part * i) + 0.5;
-          }
 
           // odd lines are slighly longer
           var line_num = (i % 2) ? 12 : 10;
