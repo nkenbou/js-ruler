@@ -17,7 +17,7 @@
   function getTypeMap() {
     return {
       'px': 1
-    }
+    };
   }
 
   function  getContentElem() {
@@ -184,7 +184,7 @@
     var rulerY = workarea.querySelector('.ruler-y');
     var rulerCorner = workarea.querySelector('.ruler-corner');
 
-    var zoom = parseFloat(document.getElementById('zoom').value);
+    var zoom = document.getElementById('zoom').value = 1;
 
     document.getElementById('zoom').addEventListener('change', function () {
       var cz = parseFloat(this.value) / zoom;
@@ -207,10 +207,10 @@
     });
 
     workarea.addEventListener('scroll', function (event) {
-      rulerX.style.top = workarea.scrollTop + 'px';
-      rulerY.style.left = workarea.scrollLeft + 'px';
-      rulerCorner.style.left = workarea.scrollLeft + 'px';
-      rulerCorner.style.top = workarea.scrollTop + 'px';
+      rulerX.style.top = workarea.scrollTop / zoom + 'px';
+      rulerY.style.left = workarea.scrollLeft / zoom + 'px';
+      rulerCorner.style.left = workarea.scrollLeft / zoom + 'px';
+      rulerCorner.style.top = workarea.scrollTop / zoom + 'px';
     });
 
     updateRulers($('#workarea > .canvas'), 1);
