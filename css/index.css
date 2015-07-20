@@ -25,16 +25,20 @@
 .ruler-corner {
   z-index: 1;
   position: absolute;
+  margin-left: -15px;
+  margin-top: -15px;
   left: 0;
   top: 0;
-  width: 15px;
-  height: 15px;
-  background-color: #000000;
+  width: 14px;
+  height: 14px;
+  border: solid 1px #000000;
+  background-color: #dddddd;
 }
 
 .ruler-x {
   z-index: 1;
   position: absolute;
+  margin-top: -15px;
   left: 0;
   right: 0;
   height: 15px;
@@ -44,6 +48,7 @@
 .ruler-y {
   z-index: 1;
   position: absolute;
+  margin-left: -15px;
   top: 0;
   bottom: 0;
   width: 15px;
@@ -52,6 +57,8 @@
 
 .canvas {
   position: absolute;
+  margin-top: 15px;
+  margin-left: 15px;
   background-color: #757575;
 }
 

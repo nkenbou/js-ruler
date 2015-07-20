@@ -28,7 +28,7 @@
     },
 
     initialize: function () {
-      var $rulerCanvasOriginal = $('#ruler-' + this.dimensionType + ' canvas:first');
+      var $rulerCanvasOriginal = this.root.find('.ruler-' + this.dimensionType + ' canvas:first');
 
       // Bit of a hack to fully clear the canvas in Safari & IE9
       var $rulerCanvas = $rulerCanvasOriginal.clone();
@@ -38,7 +38,6 @@
 
       // Set the canvas size to the width of the container
       var rulerLength = this.getRulerLength();
-      // rulerCanvas.parentNode.style[this.lengthType] = rulerLength + 'px'; // nkenbou
       this.context = rulerCanvas.getContext('2d');
 
       this.context.fillStyle = 'rgb(200,0,0)';
