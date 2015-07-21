@@ -7,20 +7,23 @@
   var CORNER_CLASS = CLASS_PREFIX + 'corner';
   var CONTENT_WRAPPER_CLASS = CLASS_PREFIX + 'content-wrapper';
 
+  var MIN_WIDTH = 1864;
+  var MIN_HEIGHT = 1500;
+
   var unitPX = {
     'px': 1
   };
 
   var zruler = {
-    root: null,
-    content: null,
+    $root: null,
+    $content: null,
     unit: 'px',
     zoomValue: 1,
 
-    ruler: function (root, option) {
-      this.root = root;
+    ruler: function ($root, option) {
+      this.$root = $root;
 
-      this.content = root.children();
+      this.$content = $root.children();
       var template =
             '<div class="' + WORKAREA_CLASS + '">' +
             '<div class="' + X_CLASS  + '">' +
@@ -33,8 +36,8 @@
             '<div class="' + CONTENT_WRAPPER_CLASS  + '">' +
             '</div>' +
             '</div>';
-      root.html(template);
-      root.find('.' + CONTENT_WRAPPER_CLASS).append(this.content);
+      $root.html(template);
+      $root.find('.' + CONTENT_WRAPPER_CLASS).append(this.$content);
 
       if (option.unit) {
         this.unit = option.unit;
@@ -43,12 +46,12 @@
         this.zoomValue = option.zoom;
       }
 
-      root.on('scroll', function (event) {
-        root.find('.' + X_CLASS).css('top', root.scrollTop() + 'px');
-        root.find('.' + Y_CLASS).css('left', root.scrollLeft() + 'px');
-        root.find('.' + CORNER_CLASS).css({
-          left: root.scrollLeft() + 'px',
-          top: root.scrollTop() + 'px'
+      $root.on('scroll', function (event) {
+        $root.find('.' + X_CLASS).css('top', $root.scrollTop() + 'px');
+        $root.find('.' + Y_CLASS).css('left', $root.scrollLeft() + 'px');
+        $root.find('.' + CORNER_CLASS).css({
+          left: $root.scrollLeft() + 'px',
+          top: $root.scrollTop() + 'px'
         });
       });
 
@@ -60,30 +63,30 @@
 
       this.update(zoom);
 
-      this.root.scrollTop(this.root.scrollTop() * cz);
-      this.root.scrollLeft(this.root.scrollLeft() * cz);
+      this.$root.scrollTop(this.$root.scrollTop() * cz);
+      this.$root.scrollLeft(this.$root.scrollLeft() * cz);
     },
 
     update: function (zoom) {
       this.zoomValue = zoom;
-      this.content.css('zoom', zoom);
+      this.$content.css('zoom', zoom);
 
-      var contentWidth = this.content.width() * zoom;
+      var contentWidth = this.$content.width() * zoom;
       var width = contentWidth * 3;
-      if (width < 1864) {
-        width = 1864;
+      if (width < MIN_WIDTH) {
+        width = MIN_WIDTH;
       }
-      var contentHeight = this.content.height() * zoom;
+      var contentHeight = this.$content.height() * zoom;
       var height = contentHeight * 3;
-      if (height < 1500) {
-        height: 1500;
+      if (height < MIN_HEIGHT) {
+        height: MIN_HEIGHT;
       }
 
-      this.root.children('.' + WORKAREA_CLASS).css({
+      this.$root.children('.' + WORKAREA_CLASS).css({
         width: width + 'px',
         height: height + 'px',
       });
-      this.root.find('.' + CONTENT_WRAPPER_CLASS).css({
+      this.$root.find('.' + CONTENT_WRAPPER_CLASS).css({
         left: width / 2 - contentWidth / 2 + 'px',
         top: height / 2 - contentHeight / 2 + 'px'
       });
@@ -98,11 +101,11 @@
     },
 
     getContentPosition:  function (positionType) {
-      return Number(this.root.find('.' + CONTENT_WRAPPER_CLASS).position()[positionType]);
+      return Number(this.$root.find('.' + CONTENT_WRAPPER_CLASS).position()[positionType]);
     },
 
     getRulerLength: function (lengthType) {
-      return this.root.children('.' + WORKAREA_CLASS)[lengthType]();
+      return this.$root.children('.' + WORKAREA_CLASS)[lengthType]();
     }
   };
 
@@ -122,26 +125,6 @@
     contextStroke: function () {
       this.context.strokeStyle = '#000';
       this.context.stroke();
-    },
-
-    initialize: function () {
-      var $rulerCanvasOriginal = zruler.root.find('.' + CLASS_PREFIX + this.dimensionType + ' canvas:first');
-
-      // Bit of a hack to fully clear the canvas in Safari & IE9
-      var $rulerCanvas = $rulerCanvasOriginal.clone();
-      $rulerCanvasOriginal.replaceWith($rulerCanvas);
-
-      var rulerCanvas = $rulerCanvas[0];
-
-      // Set the canvas size to the width of the container
-      var rulerLength = zruler.getRulerLength(this.lengthType);
-      this.context = rulerCanvas.getContext('2d');
-
-      this.context.fillStyle = 'rgb(200,0,0)';
-      this.context.fillRect(0, 0, rulerCanvas.width, rulerCanvas.height);
-      this.context.font = '9px sans-serif';
-
-      rulerCanvas[this.lengthType] = rulerLength;
     },
 
     update: function (zoom) {
@@ -201,6 +184,26 @@
       }
 
       this.contextStroke();
+    },
+
+    initialize: function () {
+      var $rulerCanvasOriginal = zruler.$root.find('.' + CLASS_PREFIX + this.dimensionType + ' canvas:first');
+
+      // Bit of a hack to fully clear the canvas in Safari & IE9
+      var $rulerCanvas = $rulerCanvasOriginal.clone();
+      $rulerCanvasOriginal.replaceWith($rulerCanvas);
+
+      var rulerCanvas = $rulerCanvas[0];
+
+      // Set the canvas size to the width of the container
+      var rulerLength = zruler.getRulerLength(this.lengthType);
+      this.context = rulerCanvas.getContext('2d');
+
+      this.context.fillStyle = 'rgb(200,0,0)';
+      this.context.fillRect(0, 0, rulerCanvas.width, rulerCanvas.height);
+      this.context.font = '9px sans-serif';
+
+      rulerCanvas[this.lengthType] = rulerLength;
     }
   };
 
