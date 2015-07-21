@@ -68,13 +68,13 @@
       this.zoomValue = zoom;
       this.content.css('zoom', zoom);
 
-      var svgWidth = this.content.width() * zoom;
-      var width = svgWidth * 3;
+      var contentWidth = this.content.width() * zoom;
+      var width = contentWidth * 3;
       if (width < 1864) {
         width = 1864;
       }
-      var svgHeight = this.content.height() * zoom;
-      var height = svgHeight * 3;
+      var contentHeight = this.content.height() * zoom;
+      var height = contentHeight * 3;
       if (height < 1500) {
         height: 1500;
       }
@@ -84,8 +84,8 @@
         height: height + 'px',
       });
       this.root.find('.' + CONTENT_WRAPPER_CLASS).css({
-        left: width / 2 - svgWidth / 2 + 'px',
-        top: height / 2 - svgHeight / 2 + 'px'
+        left: width / 2 - contentWidth / 2 + 'px',
+        top: height / 2 - contentHeight / 2 + 'px'
       });
 
       rulerX.update(zoom);
@@ -97,7 +97,7 @@
       return unitPX[this.unit];
     },
 
-    getSvgDimension:  function (positionType) {
+    getContentPosition:  function (positionType) {
       return Number(this.root.find('.' + CONTENT_WRAPPER_CLASS).position()[positionType]);
     },
 
@@ -164,7 +164,7 @@
 
       this.initialize();
 
-      var rulerDelimiter = ((zruler.getSvgDimension(this.positionType) / zoomedUnitPX) % bigInterval) * zoomedUnitPX;
+      var rulerDelimiter = ((zruler.getContentPosition(this.positionType) / zoomedUnitPX) % bigInterval) * zoomedUnitPX;
       var labelPosition = rulerDelimiter - bigIntervalPX;
       // draw big intervals
       while (rulerDelimiter < zruler.getRulerLength(this.lengthType)) {
@@ -173,7 +173,7 @@
         var currentDelimiter = Math.round(rulerDelimiter) + 0.5;
         this.contextDrawDelimiter(currentDelimiter);
 
-        var label = (labelPosition - zruler.getSvgDimension(this.positionType)) / zoomedUnitPX;
+        var label = (labelPosition - zruler.getContentPosition(this.positionType)) / zoomedUnitPX;
         if (bigInterval >= 1) {
           label = Math.round(label);
         } else {
