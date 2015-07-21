@@ -1,14 +1,33 @@
 (function (global) {
   var Ruler = {
     root: null,
-    canvas: null,
+    content: null,
+    workarea: null,
     context: null,
     unit: 'px',
     zoomValue: 1,
 
     ruler: function (root, option) {
       this.root = rulerX.root = rulerY.root = root;
-      this.canvas = rulerX.canvas = rulerY.canvas = root.children('.zruler-workarea');
+
+      this.content = root.children();
+      var template =
+            '<div class="zruler-workarea">' +
+            '<div class="zruler-x">' +
+            '<canvas height="15"></canvas>' +
+            '</div>' +
+            '<div class="zruler-y">' +
+            '<canvas width="15"></canvas>' +
+            '</div>' +
+            '<div class="zruler-corner"></div>' +
+            '<div class="zruler-content-wrapper">' +
+            '</div>' +
+            '</div>';
+      root.html(template);
+      root.find('.zruler-content-wrapper').append(this.content);
+
+      this.workarea = rulerX.workarea = rulerY.workarea = root.children('.zruler-workarea');
+
       if (option.unit) {
         rulerX.unit = rulerY.unit = option.unit;
       }
@@ -67,7 +86,7 @@
     },
 
     getRulerLength: function () {
-      return this.canvas[this.lengthType]();
+      return this.workarea[this.lengthType]();
     },
 
     contextStroke: function () {
@@ -99,7 +118,7 @@
         height: 1500;
       }
 
-      this.canvas.css({
+      this.workarea.css({
         width: width + 'px',
         height: height + 'px',
       });
