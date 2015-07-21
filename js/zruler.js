@@ -1,0 +1,224 @@
+(function (global) {
+  var Ruler = {
+    root: null,
+    canvas: null,
+    context: null,
+    unit: 'px',
+    zoomValue: 1,
+
+    ruler: function (root, option) {
+      this.root = rulerX.root = rulerY.root = root;
+      this.canvas = rulerX.canvas = rulerY.canvas = root.children('.zruler-workarea');
+      if (option.unit) {
+        rulerX.unit = rulerY.unit = option.unit;
+      }
+      if (option.zoom) {
+        this.zoomValue = rulerX.zoomValue = rulerY.zoomValue = option.zoom;
+      }
+
+      root.on('scroll', function (event) {
+        root.find('.zruler-x').css('top', root.scrollTop() + 'px');
+        root.find('.zruler-y').css('left', root.scrollLeft() + 'px');
+        root.find('.zruler-corner').css({
+          left: root.scrollLeft() + 'px',
+          top: root.scrollTop() + 'px'
+        });
+      });
+    },
+
+    initialize: function () {
+      var $rulerCanvasOriginal = this.root.find('.zruler-' + this.dimensionType + ' canvas:first');
+
+      // Bit of a hack to fully clear the canvas in Safari & IE9
+      var $rulerCanvas = $rulerCanvasOriginal.clone();
+      $rulerCanvasOriginal.replaceWith($rulerCanvas);
+
+      var rulerCanvas = $rulerCanvas[0];
+
+      // Set the canvas size to the width of the container
+      var rulerLength = this.getRulerLength();
+      this.context = rulerCanvas.getContext('2d');
+
+      this.context.fillStyle = 'rgb(200,0,0)';
+      this.context.fillRect(0, 0, rulerCanvas.width, rulerCanvas.height);
+      this.context.font = '9px sans-serif';
+
+      rulerCanvas[this.lengthType] = rulerLength;
+    },
+
+    getUnits: function () {
+      return {
+        'px': 1
+      };
+    },
+
+    getBigIntervals: function () {
+      var bigIntervals = [];
+      for (var i = 0.1; i < 1E5; i *= 10) {
+	    bigIntervals.push(i);
+	    bigIntervals.push(2 * i);
+	    bigIntervals.push(5 * i);
+      }
+      return bigIntervals;
+    },
+
+    getSvgDimension:  function () {
+      return Number(this.root.find('.zruler-content-wrapper').position()[this.positionType]);
+    },
+
+    getRulerLength: function () {
+      return this.canvas[this.lengthType]();
+    },
+
+    contextStroke: function () {
+      this.context.strokeStyle = '#000';
+      this.context.stroke();
+    },
+
+    zoom: function (zoom) {
+      var cz = zoom / this.zoomValue;
+
+      this.update(zoom);
+
+      this.root.scrollTop(this.root.scrollTop() * cz);
+      this.root.scrollLeft(this.root.scrollLeft() * cz);
+    },
+
+    update: function (zoom) {
+      this.zoomValue = rulerX.zoomValue = rulerY.zoomValue = zoom;
+      this.root.find('svg').css('zoom', zoom);
+
+      var svgWidth = this.root.find('svg').width() * zoom;
+      var width = svgWidth * 3;
+      if (width < 1864) {
+        width = 1864;
+      }
+      var svgHeight = this.root.find('svg').height() * zoom;
+      var height = svgHeight * 3;
+      if (height < 1500) {
+        height: 1500;
+      }
+
+      this.canvas.css({
+        width: width + 'px',
+        height: height + 'px',
+      });
+      this.root.find('.zruler-content-wrapper').css({
+        left: width / 2 - svgWidth / 2 + 'px',
+        top: height / 2 - svgHeight / 2 + 'px'
+      });
+
+      this._update.call(rulerX, zoom);
+      this._update.call(rulerY, zoom);
+    },
+
+    _update: function (zoom) {
+      var i;
+      var units = this.getUnits();
+      var unit = units[this.unit]; // 1 = 1px
+      var zoomedUnitPX = unit * zoom;
+
+      // Calculate the main number interval
+      var raw = 50 / zoomedUnitPX;
+      var bigInterval = 1;
+      var bigIntervals = this.getBigIntervals();
+      for (i = 0; i < bigIntervals.length; i++) {
+        bigInterval = bigIntervals[i];
+        if (raw <= bigInterval) {
+          break;
+        }
+      }
+
+      var bigIntervalPX = bigInterval * zoomedUnitPX;
+
+      this.initialize();
+
+      var rulerDelimiter = ((this.getSvgDimension() / zoomedUnitPX) % bigInterval) * zoomedUnitPX;
+      var labelPosition = rulerDelimiter - bigIntervalPX;
+      // draw big intervals
+      while (rulerDelimiter < this.getRulerLength()) {
+        labelPosition += bigIntervalPX;
+
+        var currentDelimiter = Math.round(rulerDelimiter) + 0.5;
+        this.contextDrawDelimiter(currentDelimiter);
+
+        var label = (labelPosition - this.getSvgDimension()) / zoomedUnitPX;
+        if (bigInterval >= 1) {
+          label = Math.round(label);
+        } else {
+          var decs = String(bigInterval).split('.')[1].length;
+          label = label.toFixed(decs);
+        }
+
+        // Change 1000s to Ks
+        if (label !== 0 && label !== 1000 && label % 1000 === 0) {
+          label = (label / 1000) + 'K';
+        }
+
+        this.contextDrawLabel(label, rulerDelimiter);
+
+        var part = bigIntervalPX / 10;
+        // draw the small intervals
+        for (i = 1; i < 10; i++) {
+          var subDelimiter = Math.round(rulerDelimiter + part * i) + 0.5;
+
+          // odd lines are slighly longer
+          var lineNumber = (i % 2) ? 12 : 10;
+          this.contextDrawSubDelimiter(subDelimiter, lineNumber);
+        }
+        rulerDelimiter += bigIntervalPX;
+      }
+
+      this.contextStroke();
+    }
+  };
+
+  var rulerX = {
+    positionType: 'left',
+    dimensionType: 'x',
+    lengthType: 'width',
+
+    contextDrawDelimiter: function (x) {
+      this.context.moveTo(x, 15);
+      this.context.lineTo(x, 0);
+    },
+
+    contextDrawLabel: function (label, rulerDelimiter) {
+      this.context.fillText(label, rulerDelimiter+2, 8);
+    },
+
+    contextDrawSubDelimiter: function (x, lineNumber) {
+      this.context.moveTo(x, 15);
+      this.context.lineTo(x, lineNumber);
+    }
+  };
+
+  var rulerY = {
+    positionType: 'top',
+    dimensionType: 'y',
+    lengthType: 'height',
+
+    contextDrawDelimiter: function (y) {
+      this.context.moveTo(15, y);
+      this.context.lineTo(0, y);
+    },
+
+    contextDrawLabel: function (label, rulerDelimiter) {
+      // draw label vertically
+      var str = String(label).split('');
+      for (i = 0; i < str.length; i++) {
+        this.context.fillText(str[i], 1, (rulerDelimiter+9) + i*9);
+      }
+    },
+
+    contextDrawSubDelimiter: function (y, lineNumber) {
+      this.context.moveTo(15, y);
+      this.context.lineTo(lineNumber, y);
+    }
+  };
+
+  $.extend(true, rulerX, Ruler);
+  $.extend(true, rulerY, Ruler);
+
+  global.Ruler = Ruler;
+}(window));

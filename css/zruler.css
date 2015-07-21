@@ -1,0 +1,44 @@
+.zruler-corner {
+  z-index: 1;
+  position: absolute;
+  margin-left: -15px;
+  margin-top: -15px;
+  left: 0;
+  top: 0;
+  width: 14px;
+  height: 14px;
+  border: solid 1px #000000;
+  background-color: #dddddd;
+}
+
+.zruler-x {
+  z-index: 1;
+  position: absolute;
+  margin-top: -15px;
+  left: 0;
+  right: 0;
+  height: 15px;
+  background-color: #dddddd;
+}
+
+.zruler-y {
+  z-index: 1;
+  position: absolute;
+  margin-left: -15px;
+  top: 0;
+  bottom: 0;
+  width: 15px;
+  background-color: #dddddd;
+}
+
+.zruler-workarea {
+  position: absolute;
+  margin-top: 15px;
+  margin-left: 15px;
+  background-color: #757575;
+}
+
+.zruler-content-wrapper {
+  position: absolute;
+  background-color: #ffffff;
+}

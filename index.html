@@ -3,22 +3,24 @@
   <head>
     <meta charset="utf-8">
     <title>Ruler spike</title>
+    <link rel="stylesheet" href="css/zruler.css">
     <link rel="stylesheet" href="css/index.css">
     <script src="js/jquery-2.1.4.js"></script>
+    <script src="js/zruler.js"></script>
     <script src="js/main.js"></script>
   </head>
   <body>
-    <div class="center-pane">
-      <div id="workarea" class="workarea">
-        <div class="canvas">
-          <div class="ruler-x">
+    <div id="center-pane">
+      <div id="workarea">
+        <div class="zruler-workarea">
+          <div class="zruler-x">
             <canvas height="15"></canvas>
           </div>
-          <div class="ruler-y">
+          <div class="zruler-y">
             <canvas width="15"></canvas>
           </div>
-          <div class="ruler-corner"></div>
-          <div class="content-wrapper">
+          <div class="zruler-corner"></div>
+          <div class="zruler-content-wrapper">
             <svg width="500" height="500">
               <polyline points="100 100 300 100 400 300" stroke="#000000" fill="none"></polyline>
             </svg>
