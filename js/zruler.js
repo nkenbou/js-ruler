@@ -1,32 +1,38 @@
 (function (global) {
+
+  var CLASS_PREFIX = 'zruler-';
+  var WORKAREA_CLASS = CLASS_PREFIX + 'workarea';
+  var X_CLASS = CLASS_PREFIX + 'x';
+  var Y_CLASS = CLASS_PREFIX + 'y';
+  var CORNER_CLASS = CLASS_PREFIX + 'corner';
+  var CONTENT_WRAPPER_CLASS = CLASS_PREFIX + 'content-wrapper';
+
   var Ruler = {
     root: null,
     content: null,
-    workarea: null,
-    context: null,
     unit: 'px',
     zoomValue: 1,
+
+    context: null,
 
     ruler: function (root, option) {
       this.root = rulerX.root = rulerY.root = root;
 
       this.content = root.children();
       var template =
-            '<div class="zruler-workarea">' +
-            '<div class="zruler-x">' +
+            '<div class="' + WORKAREA_CLASS + '">' +
+            '<div class="' + X_CLASS  + '">' +
             '<canvas height="15"></canvas>' +
             '</div>' +
-            '<div class="zruler-y">' +
+            '<div class="' + Y_CLASS  + '">' +
             '<canvas width="15"></canvas>' +
             '</div>' +
-            '<div class="zruler-corner"></div>' +
-            '<div class="zruler-content-wrapper">' +
+            '<div class="' + CORNER_CLASS  + '"></div>' +
+            '<div class="' + CONTENT_WRAPPER_CLASS  + '">' +
             '</div>' +
             '</div>';
       root.html(template);
-      root.find('.zruler-content-wrapper').append(this.content);
-
-      this.workarea = rulerX.workarea = rulerY.workarea = root.children('.zruler-workarea');
+      root.find('.' + CONTENT_WRAPPER_CLASS).append(this.content);
 
       if (option.unit) {
         rulerX.unit = rulerY.unit = option.unit;
@@ -36,9 +42,9 @@
       }
 
       root.on('scroll', function (event) {
-        root.find('.zruler-x').css('top', root.scrollTop() + 'px');
-        root.find('.zruler-y').css('left', root.scrollLeft() + 'px');
-        root.find('.zruler-corner').css({
+        root.find('.' + X_CLASS).css('top', root.scrollTop() + 'px');
+        root.find('.' + Y_CLASS).css('left', root.scrollLeft() + 'px');
+        root.find('.' + CORNER_CLASS).css({
           left: root.scrollLeft() + 'px',
           top: root.scrollTop() + 'px'
         });
@@ -46,7 +52,7 @@
     },
 
     initialize: function () {
-      var $rulerCanvasOriginal = this.root.find('.zruler-' + this.dimensionType + ' canvas:first');
+      var $rulerCanvasOriginal = this.root.find('.' + CLASS_PREFIX + this.dimensionType + ' canvas:first');
 
       // Bit of a hack to fully clear the canvas in Safari & IE9
       var $rulerCanvas = $rulerCanvasOriginal.clone();
@@ -82,11 +88,11 @@
     },
 
     getSvgDimension:  function () {
-      return Number(this.root.find('.zruler-content-wrapper').position()[this.positionType]);
+      return Number(this.root.find('.' + CONTENT_WRAPPER_CLASS).position()[this.positionType]);
     },
 
     getRulerLength: function () {
-      return this.workarea[this.lengthType]();
+      return this.root.children('.' + WORKAREA_CLASS)[this.lengthType]();
     },
 
     contextStroke: function () {
@@ -105,24 +111,24 @@
 
     update: function (zoom) {
       this.zoomValue = rulerX.zoomValue = rulerY.zoomValue = zoom;
-      this.root.find('svg').css('zoom', zoom);
+      this.content.css('zoom', zoom);
 
-      var svgWidth = this.root.find('svg').width() * zoom;
+      var svgWidth = this.content.width() * zoom;
       var width = svgWidth * 3;
       if (width < 1864) {
         width = 1864;
       }
-      var svgHeight = this.root.find('svg').height() * zoom;
+      var svgHeight = this.content.height() * zoom;
       var height = svgHeight * 3;
       if (height < 1500) {
         height: 1500;
       }
 
-      this.workarea.css({
+      this.root.children('.' + WORKAREA_CLASS).css({
         width: width + 'px',
         height: height + 'px',
       });
-      this.root.find('.zruler-content-wrapper').css({
+      this.root.find('.' + CONTENT_WRAPPER_CLASS).css({
         left: width / 2 - svgWidth / 2 + 'px',
         top: height / 2 - svgHeight / 2 + 'px'
       });
