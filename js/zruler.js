@@ -142,49 +142,6 @@
       rulerCanvas[this.lengthType] = rulerLength;
     },
 
-    getRulerLength: function (lengthType) {
-      return this.root.children('.' + WORKAREA_CLASS)[lengthType]();
-    }
-  };
-
-  var Ruler = {
-    context: null,
-
-    getBigIntervals: function () {
-      var bigIntervals = [];
-      for (var i = 0.1; i < 1E5; i *= 10) {
-	    bigIntervals.push(i);
-	    bigIntervals.push(2 * i);
-	    bigIntervals.push(5 * i);
-      }
-      return bigIntervals;
-    },
-
-    contextStroke: function () {
-      this.context.strokeStyle = '#000';
-      this.context.stroke();
-    },
-
-    initialize: function () {
-      var $rulerCanvasOriginal = zruler.root.find('.' + CLASS_PREFIX + this.dimensionType + ' canvas:first');
-
-      // Bit of a hack to fully clear the canvas in Safari & IE9
-      var $rulerCanvas = $rulerCanvasOriginal.clone();
-      $rulerCanvasOriginal.replaceWith($rulerCanvas);
-
-      var rulerCanvas = $rulerCanvas[0];
-
-      // Set the canvas size to the width of the container
-      var rulerLength = zruler.getRulerLength(this.lengthType);
-      this.context = rulerCanvas.getContext('2d');
-
-      this.context.fillStyle = 'rgb(200,0,0)';
-      this.context.fillRect(0, 0, rulerCanvas.width, rulerCanvas.height);
-      this.context.font = '9px sans-serif';
-
-      rulerCanvas[this.lengthType] = rulerLength;
-    },
-
     update: function (zoom) {
       var i;
       var unitPX = zruler.getUnitPX();
