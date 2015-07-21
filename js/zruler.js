@@ -7,16 +7,14 @@
   var CORNER_CLASS = CLASS_PREFIX + 'corner';
   var CONTENT_WRAPPER_CLASS = CLASS_PREFIX + 'content-wrapper';
 
-  var Ruler = {
+  var zruler = {
     root: null,
     content: null,
     unit: 'px',
     zoomValue: 1,
 
-    context: null,
-
     ruler: function (root, option) {
-      this.root = rulerX.root = rulerY.root = root;
+      this.root = root;
 
       this.content = root.children();
       var template =
@@ -35,10 +33,10 @@
       root.find('.' + CONTENT_WRAPPER_CLASS).append(this.content);
 
       if (option.unit) {
-        rulerX.unit = rulerY.unit = option.unit;
+        this.unit = option.unit;
       }
       if (option.zoom) {
-        this.zoomValue = rulerX.zoomValue = rulerY.zoomValue = option.zoom;
+        this.zoomValue = option.zoom;
       }
 
       root.on('scroll', function (event) {
@@ -51,53 +49,10 @@
       });
     },
 
-    initialize: function () {
-      var $rulerCanvasOriginal = this.root.find('.' + CLASS_PREFIX + this.dimensionType + ' canvas:first');
-
-      // Bit of a hack to fully clear the canvas in Safari & IE9
-      var $rulerCanvas = $rulerCanvasOriginal.clone();
-      $rulerCanvasOriginal.replaceWith($rulerCanvas);
-
-      var rulerCanvas = $rulerCanvas[0];
-
-      // Set the canvas size to the width of the container
-      var rulerLength = this.getRulerLength();
-      this.context = rulerCanvas.getContext('2d');
-
-      this.context.fillStyle = 'rgb(200,0,0)';
-      this.context.fillRect(0, 0, rulerCanvas.width, rulerCanvas.height);
-      this.context.font = '9px sans-serif';
-
-      rulerCanvas[this.lengthType] = rulerLength;
-    },
-
     getUnits: function () {
       return {
         'px': 1
       };
-    },
-
-    getBigIntervals: function () {
-      var bigIntervals = [];
-      for (var i = 0.1; i < 1E5; i *= 10) {
-	    bigIntervals.push(i);
-	    bigIntervals.push(2 * i);
-	    bigIntervals.push(5 * i);
-      }
-      return bigIntervals;
-    },
-
-    getSvgDimension:  function () {
-      return Number(this.root.find('.' + CONTENT_WRAPPER_CLASS).position()[this.positionType]);
-    },
-
-    getRulerLength: function () {
-      return this.root.children('.' + WORKAREA_CLASS)[this.lengthType]();
-    },
-
-    contextStroke: function () {
-      this.context.strokeStyle = '#000';
-      this.context.stroke();
     },
 
     zoom: function (zoom) {
@@ -110,7 +65,7 @@
     },
 
     update: function (zoom) {
-      this.zoomValue = rulerX.zoomValue = rulerY.zoomValue = zoom;
+      this.zoomValue = zoom;
       this.content.css('zoom', zoom);
 
       var svgWidth = this.content.width() * zoom;
@@ -133,14 +88,61 @@
         top: height / 2 - svgHeight / 2 + 'px'
       });
 
-      this._update.call(rulerX, zoom);
-      this._update.call(rulerY, zoom);
+      rulerX._update(zoom);
+      rulerY._update(zoom);
+    },
+
+    getSvgDimension:  function (positionType) {
+      return Number(this.root.find('.' + CONTENT_WRAPPER_CLASS).position()[positionType]);
+    },
+
+    getRulerLength: function (lengthType) {
+      return this.root.children('.' + WORKAREA_CLASS)[lengthType]();
+    }
+  };
+
+  var Ruler = {
+    context: null,
+
+    getBigIntervals: function () {
+      var bigIntervals = [];
+      for (var i = 0.1; i < 1E5; i *= 10) {
+	    bigIntervals.push(i);
+	    bigIntervals.push(2 * i);
+	    bigIntervals.push(5 * i);
+      }
+      return bigIntervals;
+    },
+
+    contextStroke: function () {
+      this.context.strokeStyle = '#000';
+      this.context.stroke();
+    },
+
+    initialize: function () {
+      var $rulerCanvasOriginal = zruler.root.find('.' + CLASS_PREFIX + this.dimensionType + ' canvas:first');
+
+      // Bit of a hack to fully clear the canvas in Safari & IE9
+      var $rulerCanvas = $rulerCanvasOriginal.clone();
+      $rulerCanvasOriginal.replaceWith($rulerCanvas);
+
+      var rulerCanvas = $rulerCanvas[0];
+
+      // Set the canvas size to the width of the container
+      var rulerLength = zruler.getRulerLength(this.lengthType);
+      this.context = rulerCanvas.getContext('2d');
+
+      this.context.fillStyle = 'rgb(200,0,0)';
+      this.context.fillRect(0, 0, rulerCanvas.width, rulerCanvas.height);
+      this.context.font = '9px sans-serif';
+
+      rulerCanvas[this.lengthType] = rulerLength;
     },
 
     _update: function (zoom) {
       var i;
-      var units = this.getUnits();
-      var unit = units[this.unit]; // 1 = 1px
+      var units = zruler.getUnits();
+      var unit = units[zruler.unit]; // 1 = 1px
       var zoomedUnitPX = unit * zoom;
 
       // Calculate the main number interval
@@ -158,16 +160,16 @@
 
       this.initialize();
 
-      var rulerDelimiter = ((this.getSvgDimension() / zoomedUnitPX) % bigInterval) * zoomedUnitPX;
+      var rulerDelimiter = ((zruler.getSvgDimension(this.positionType) / zoomedUnitPX) % bigInterval) * zoomedUnitPX;
       var labelPosition = rulerDelimiter - bigIntervalPX;
       // draw big intervals
-      while (rulerDelimiter < this.getRulerLength()) {
+      while (rulerDelimiter < zruler.getRulerLength(this.lengthType)) {
         labelPosition += bigIntervalPX;
 
         var currentDelimiter = Math.round(rulerDelimiter) + 0.5;
         this.contextDrawDelimiter(currentDelimiter);
 
-        var label = (labelPosition - this.getSvgDimension()) / zoomedUnitPX;
+        var label = (labelPosition - zruler.getSvgDimension(this.positionType)) / zoomedUnitPX;
         if (bigInterval >= 1) {
           label = Math.round(label);
         } else {
@@ -245,5 +247,5 @@
   $.extend(true, rulerX, Ruler);
   $.extend(true, rulerY, Ruler);
 
-  global.Ruler = Ruler;
+  global.zruler = zruler;
 }(window));
