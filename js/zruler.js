@@ -7,6 +7,10 @@
   var CORNER_CLASS = CLASS_PREFIX + 'corner';
   var CONTENT_WRAPPER_CLASS = CLASS_PREFIX + 'content-wrapper';
 
+  var unitPX = {
+    'px': 1
+  };
+
   var zruler = {
     root: null,
     content: null,
@@ -49,12 +53,6 @@
       });
     },
 
-    getUnits: function () {
-      return {
-        'px': 1
-      };
-    },
-
     zoom: function (zoom) {
       var cz = zoom / this.zoomValue;
 
@@ -90,6 +88,11 @@
 
       rulerX.update(zoom);
       rulerY.update(zoom);
+    },
+
+    getUnitPX: function () {
+      // 1 = 1px
+      return unitPX[this.unit];
     },
 
     getSvgDimension:  function (positionType) {
@@ -184,9 +187,8 @@
 
     update: function (zoom) {
       var i;
-      var units = zruler.getUnits();
-      var unit = units[zruler.unit]; // 1 = 1px
-      var zoomedUnitPX = unit * zoom;
+      var unitPX = zruler.getUnitPX();
+      var zoomedUnitPX = unitPX * zoom;
 
       // Calculate the main number interval
       var raw = 50 / zoomedUnitPX;
