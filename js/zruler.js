@@ -51,6 +51,8 @@
           top: root.scrollTop() + 'px'
         });
       });
+
+      this.update(1);
     },
 
     zoom: function (zoom) {

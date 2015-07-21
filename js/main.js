@@ -8,6 +8,5 @@
       unit: 'px',
       zoom: 1
     });
-    zruler.update(1);
   });
 }());
