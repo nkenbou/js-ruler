@@ -14,6 +14,26 @@
     'px': 1
   };
 
+  var BIG_INTERVALS = [];
+  for (var i = 0.1; i < 1E5; i *= 10) {
+	BIG_INTERVALS.push(i);
+	BIG_INTERVALS.push(2 * i);
+	BIG_INTERVALS.push(5 * i);
+  }
+
+  function calculateDelimiterPoint(delimiterPoint) {
+    return Math.round(delimiterPoint) + 0.5;
+  }
+
+  function calculateSubDelimiterPoint(delimiterPoint, intervalPX, index) {
+    var subDelimiterPart = intervalPX / 10;
+    return Math.round(delimiterPoint + subDelimiterPart * index) + 0.5
+  }
+
+  function calculateSubDelimiterLengthPoint(index) {
+    return (index % 2) ? 12 : 10;
+  }
+
   var zruler = {
     $root: null,
     $content: null,
@@ -95,9 +115,25 @@
       rulerY.update(zoom);
     },
 
-    getUnitPX: function () {
-      // 1 = 1px
-      return unitPX[this.unit];
+    getZoomedUnitPX: function () {
+      return unitPX[this.unit] * this.zoomValue;
+    },
+
+    getBigInterval: function () {
+      // Calculate the main number interval
+      var raw = 50 / this.getZoomedUnitPX();
+      var bigInterval = 1;
+      for (var i = 0; i < BIG_INTERVALS.length; i++) {
+        bigInterval = BIG_INTERVALS[i];
+        if (raw <= bigInterval) {
+          break;
+        }
+      }
+      return bigInterval;
+    },
+
+    getBigIntervalPX: function () {
+      return this.getBigInterval() * this.getZoomedUnitPX();
     },
 
     getContentPosition:  function (positionType) {
@@ -112,14 +148,23 @@
   var Ruler = {
     context: null,
 
-    getBigIntervals: function () {
-      var bigIntervals = [];
-      for (var i = 0.1; i < 1E5; i *= 10) {
-	    bigIntervals.push(i);
-	    bigIntervals.push(2 * i);
-	    bigIntervals.push(5 * i);
+    calculateLabel: function (delimiterPoint) {
+      var bigInterval = zruler.getBigInterval();
+      var label = (delimiterPoint - zruler.getContentPosition(this.positionType)) / zruler.getZoomedUnitPX();
+
+      if (bigInterval >= 1) {
+        label = Math.round(label);
+      } else {
+        var decs = String(bigInterval).split('.')[1].length;
+        label = label.toFixed(decs);
       }
-      return bigIntervals;
+
+      // Change 1000s to Ks
+      if (label !== 0 && label !== 1000 && label % 1000 === 0) {
+        label = (label / 1000) + 'K';
+      }
+
+      return label;
     },
 
     contextStroke: function () {
@@ -128,59 +173,24 @@
     },
 
     update: function (zoom) {
-      var i;
-      var unitPX = zruler.getUnitPX();
-      var zoomedUnitPX = unitPX * zoom;
-
-      // Calculate the main number interval
-      var raw = 50 / zoomedUnitPX;
-      var bigInterval = 1;
-      var bigIntervals = this.getBigIntervals();
-      for (i = 0; i < bigIntervals.length; i++) {
-        bigInterval = bigIntervals[i];
-        if (raw <= bigInterval) {
-          break;
-        }
-      }
-
-      var bigIntervalPX = bigInterval * zoomedUnitPX;
-
       this.initialize();
 
-      var rulerDelimiter = ((zruler.getContentPosition(this.positionType) / zoomedUnitPX) % bigInterval) * zoomedUnitPX;
-      var labelPosition = rulerDelimiter - bigIntervalPX;
+      var zoomedUnitPX = zruler.getZoomedUnitPX();
+      var bigInterval = zruler.getBigInterval();
+      var bigIntervalPX = zruler.getBigIntervalPX();
+      var delimiterPoint = ((zruler.getContentPosition(this.positionType) / zoomedUnitPX) % bigInterval) * zoomedUnitPX;
+
       // draw big intervals
-      while (rulerDelimiter < zruler.getRulerLength(this.lengthType)) {
-        labelPosition += bigIntervalPX;
+      while (delimiterPoint < zruler.getRulerLength(this.lengthType)) {
+        this.drawDelimiter(delimiterPoint);
+        this.drawLabel(delimiterPoint);
 
-        var currentDelimiter = Math.round(rulerDelimiter) + 0.5;
-        this.contextDrawDelimiter(currentDelimiter);
-
-        var label = (labelPosition - zruler.getContentPosition(this.positionType)) / zoomedUnitPX;
-        if (bigInterval >= 1) {
-          label = Math.round(label);
-        } else {
-          var decs = String(bigInterval).split('.')[1].length;
-          label = label.toFixed(decs);
-        }
-
-        // Change 1000s to Ks
-        if (label !== 0 && label !== 1000 && label % 1000 === 0) {
-          label = (label / 1000) + 'K';
-        }
-
-        this.contextDrawLabel(label, rulerDelimiter);
-
-        var part = bigIntervalPX / 10;
         // draw the small intervals
-        for (i = 1; i < 10; i++) {
-          var subDelimiter = Math.round(rulerDelimiter + part * i) + 0.5;
-
-          // odd lines are slighly longer
-          var lineNumber = (i % 2) ? 12 : 10;
-          this.contextDrawSubDelimiter(subDelimiter, lineNumber);
+        for (var i = 1; i < 10; i++) {
+          this.drawSubDelimiter(delimiterPoint, i);
         }
-        rulerDelimiter += bigIntervalPX;
+
+        delimiterPoint += bigIntervalPX;
       }
 
       this.contextStroke();
@@ -212,18 +222,22 @@
     dimensionType: 'x',
     lengthType: 'width',
 
-    contextDrawDelimiter: function (x) {
+    drawDelimiter: function (delimiterPoint) {
+      var x = calculateDelimiterPoint(delimiterPoint);
       this.context.moveTo(x, 15);
       this.context.lineTo(x, 0);
     },
 
-    contextDrawLabel: function (label, rulerDelimiter) {
-      this.context.fillText(label, rulerDelimiter+2, 8);
+    drawLabel: function (delimiterPoint) {
+      var label = this.calculateLabel(delimiterPoint);
+      this.context.fillText(label, delimiterPoint + 2, 8);
     },
 
-    contextDrawSubDelimiter: function (x, lineNumber) {
+    drawSubDelimiter: function (delimiterPoint, index) {
+      var x = calculateSubDelimiterPoint(delimiterPoint, zruler.getBigIntervalPX(), index);
+      var toY = calculateSubDelimiterLengthPoint(index);
       this.context.moveTo(x, 15);
-      this.context.lineTo(x, lineNumber);
+      this.context.lineTo(x, toY);
     }
   };
 
@@ -232,22 +246,26 @@
     dimensionType: 'y',
     lengthType: 'height',
 
-    contextDrawDelimiter: function (y) {
+    drawDelimiter: function (delimiterPoint) {
+      var y = calculateDelimiterPoint(delimiterPoint);
       this.context.moveTo(15, y);
       this.context.lineTo(0, y);
     },
 
-    contextDrawLabel: function (label, rulerDelimiter) {
+    drawLabel: function (delimiterPoint) {
+      var label = this.calculateLabel(delimiterPoint);
       // draw label vertically
       var str = String(label).split('');
-      for (i = 0; i < str.length; i++) {
-        this.context.fillText(str[i], 1, (rulerDelimiter+9) + i*9);
+      for (var i = 0; i < str.length; i++) {
+        this.context.fillText(str[i], 1, delimiterPoint + 9 * (i + 1));
       }
     },
 
-    contextDrawSubDelimiter: function (y, lineNumber) {
+    drawSubDelimiter: function (delimiterPoint, index) {
+      var y = calculateSubDelimiterPoint(delimiterPoint, zruler.getBigIntervalPX(), index);
+      var toX = calculateSubDelimiterLengthPoint(index);
       this.context.moveTo(15, y);
-      this.context.lineTo(lineNumber, y);
+      this.context.lineTo(toX, y);
     }
   };
 
